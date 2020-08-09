@@ -1,4 +1,4 @@
-package mf.asciitext.app
+package mf.asciitext
 
 import android.app.Application
 import mf.asciitext.fonts.AvailableFonts

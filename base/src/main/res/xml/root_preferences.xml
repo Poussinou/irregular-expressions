@@ -26,6 +26,15 @@
             android:summary="%s"
             android:icon="@drawable/ic_keyboard_outline"
             android:title="@string/setting_keyboard_layout" />
+
+        <ListPreference
+            android:defaultValue="3"
+            android:entries="@array/settings_key_height_array"
+            android:entryValues="@array/settings_key_height_values_array"
+            android:key="kbd_key_height"
+            android:summary="%s"
+            android:icon="@drawable/ic_height"
+            android:title="@string/setting_key_height" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/label_about">

@@ -1,12 +1,13 @@
-package mf.asciitext
+package mf.asciitext.keyboard
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import mf.asciitext.FontPickerAdapter.ItemViewHolder
+import mf.asciitext.R
 import mf.asciitext.fonts.AppFont
+import mf.asciitext.keyboard.FontPickerAdapter.ItemViewHolder
 
 class FontPickerAdapter(
     private var dataSource: List<AppFont>?,

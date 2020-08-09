@@ -22,10 +22,21 @@
     <string name="intro_subtitle">How to use</string>
     <string name="enable_keyboard">1. Enable Keyboard</string>
     <string name="select_keyboard">2. Select Keyboard</string>
-    <string name="now_try_it">3. Now try it — type here:</string>
+    <string name="now_try_it">3. Now try it</string>
     <string name="setting_keyboard_layout">Keyboard Layout</string>
     <string name="kbd_layout_qwerty">QWERTY</string>
     <string name="kbd_layout_azerty">AZERTY</string>
+    <string name="configure_fonts">Configure Fonts</string>
+    <string name="config_fonts_summary">Show, hide and reorder fonts</string>
+    <string name="font_config_instructions">Reorder fonts by long-pressing then dragging to new position. Arrows move font to top/bottom. Toggle off to hide font from keyboard.</string>
+    <string name="label_send_key">Send</string>
+    <string name="label_next_key">Next</string>
+    <string name="label_go_key">GO</string>
+    <string name="type_here">Type here…</string>
+    <string name="setting_key_height">Key Height</string>
+    <string name="kbd_height_short">Short</string>
+    <string name="kbd_height_medium">Medium</string>
+    <string name="kbd_height_tall">Tall</string>
 
     <string-array name="settings_layout_names_array">
         <item>@string/kbd_layout_qwerty</item>
@@ -35,6 +46,18 @@
     <string-array name="settings_layout_values_array">
         <item>1</item>
         <item>2</item>
+    </string-array>
+
+    <string-array name="settings_key_height_array">
+        <item>@string/kbd_height_short</item>
+        <item>@string/kbd_height_medium</item>
+        <item>@string/kbd_height_tall</item>
+    </string-array>
+
+    <string-array name="settings_key_height_values_array">
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
     </string-array>
 
     <!-- font names -->
@@ -71,11 +94,4 @@
     <string name="font_name_cutout">Cutout</string>
     <string name="font_name_regular">Regular</string>
     <string name="font_name_spongemock">Spongemock</string>
-    <string name="configure_fonts">Configure Fonts</string>
-    <string name="config_fonts_summary">Show, hide and reorder fonts</string>
-    <string name="font_config_instructions">Reorder fonts by long-pressing then dragging to new position. Arrows move font to top/bottom. Toggle off to hide font from keyboard.</string>
-    <string name="label_send_key">Send</string>
-    <string name="label_next_key">Next</string>
-    <string name="label_go_key">GO</string>
-
 </resources>

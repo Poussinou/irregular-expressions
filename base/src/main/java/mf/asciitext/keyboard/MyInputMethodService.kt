@@ -1,12 +1,11 @@
 @file:Suppress("DEPRECATION")
 
-package mf.asciitext
+package mf.asciitext.keyboard
 
 import android.content.Context
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
-import android.inputmethodservice.Keyboard.KEYCODE_DONE
 import android.inputmethodservice.KeyboardView
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
 import android.os.Build
@@ -17,7 +16,7 @@ import android.preference.PreferenceManager
 import android.text.InputType
 import android.text.TextUtils
 import android.text.method.MetaKeyKeyListener
-import android.util.Log
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -26,6 +25,8 @@ import androidx.appcompat.widget.AppCompatImageButton
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import mf.asciitext.R
+import mf.asciitext.SettingsActivity
 import mf.asciitext.fonts.AppFont
 import mf.asciitext.fonts.AvailableFonts.getEnabledFonts
 import java.util.concurrent.TimeUnit
@@ -41,6 +42,10 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
     private val VIBRATION_DURATION_MS = 25L
     private val LONG_PRESS = 200L
     private val DEFAULT_KBD_LAYOUT = "1" // 1 = qwerty, 2 = azerty
+    private val KEY_HEIGHT_SHORT = 40
+    private val KEY_HEIGHT_MED = 50
+    private val KEY_HEIGHT_TALL = 60
+    private val DEFAULT_KEY_HEIGHT = KEY_HEIGHT_MED
     private val DEFAULT_VIBRATIONS = false
 
     // Primary vs. secondary keyboards
@@ -88,6 +93,7 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
     // user preferences
     private var keyVibrations = DEFAULT_VIBRATIONS
     private var keyboardLayout = DEFAULT_KBD_LAYOUT
+    private var keyHeight = DEFAULT_KEY_HEIGHT
 
     // called initially when inflating keyboard
     override fun onCreateInputView(): View {
@@ -99,21 +105,23 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
         keyboardView = layout.findViewById(R.id.keyboard_view)
         keyboardView?.setOnKeyboardActionListener(this)
         if (keyboardChoice == NUMBER_KBD) {
-            enableSymbolicKeyboard()
+            activateNumericKeyboard()
         } else {
-            enableAlphaKeyboard()
+            activateAlphaKeyboard()
         }
         for (i in 0..(keyboard!!.keys).size) {
-            if (keyboard!!.keys[i].codes.contains(KEYCODE_DONE)) {
+            if (keyboard!!.keys[i].codes.contains(Keyboard.KEYCODE_DONE)) {
                 mEnterKeyIndex = i
                 break
             }
         }
+        adjustKeyHeight()
 
         /* setup font picker recyclerView */
 
         fontPicker = layout.findViewById(R.id.fontPicker)
-        adapter = FontPickerAdapter(fonts, onFontSelection())
+        adapter =
+            FontPickerAdapter(fonts, onFontSelection())
         val layoutManager = GridLayoutManager(
             ctx, 1, LinearLayoutManager.HORIZONTAL, false
         )
@@ -172,6 +180,14 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
             }
         }
         setImeOptions(attribute.imeOptions)
+        adjustKeyHeight()
+    }
+
+    private fun adjustKeyHeight() {
+        if (keyboard != null) {
+            (keyboard as CustomKeyboard).changeKeyHeight(convertDpToPx(keyHeight))
+            keyboardView!!.closing()
+        }
     }
 
     /**
@@ -183,6 +199,7 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
         initPreferences()
         fonts = getEnabledFonts()
         adapter!!.updateFonts(fonts)
+        adjustKeyHeight()
     }
 
     /**
@@ -192,7 +209,7 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
         if (currentInputConnection != null) {
             when (primaryCode) {
                 SECONDARY_KBD_KEYCODE -> toggleExtendedKeyboardView()
-                ALPHA_KEYBOARD_KEYCODE -> enableAlphaKeyboard()
+                ALPHA_KEYBOARD_KEYCODE -> activateAlphaKeyboard()
                 Keyboard.KEYCODE_DELETE -> handleDeleteKeyPress()
                 Keyboard.KEYCODE_SHIFT -> handleShiftKeyPress()
                 Keyboard.KEYCODE_DONE -> handleDoneKeyPress()
@@ -241,8 +258,7 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
         if (c == 0 || currentInputConnection == null) {
             return false
         }
-        if (c == KEYCODE_SPACE)
-        {
+        if (c == KEYCODE_SPACE) {
             encodeCharacter(KEYCODE_SPACE)
             return true
         }
@@ -251,22 +267,31 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
     }
 
     /**
-     * Switch between numeric and symbolic keyboard
+     * Switch between numeric and symbolic keyboards
      */
     private fun toggleExtendedKeyboardView() {
         if (keyboardChoice == NUMBER_KBD) {
-            keyboard = Keyboard(this, R.xml.keyboard_math)
-            keyboardChoice = MATH_KBD
+            activateSymbolicKeyboard()
         } else {
-            keyboard = Keyboard(this, R.xml.keyboard_extended)
-            keyboardChoice = NUMBER_KBD
+            activateNumericKeyboard()
         }
+    }
+
+    /**
+     * Keyboard with less common symbols, e.g. math symbols etc.
+     */
+    private fun activateSymbolicKeyboard() {
+        keyboard = CustomKeyboard(this, R.xml.keyboard_math)
+        keyboardChoice = MATH_KBD
         keyboardView!!.keyboard = keyboard
         keyboardView!!.invalidateAllKeys()
     }
 
-    private fun enableSymbolicKeyboard() {
-        keyboard = Keyboard(this, R.xml.keyboard_extended)
+    /**
+     * Keyboard with numbers and basic punctuation
+     */
+    private fun activateNumericKeyboard() {
+        keyboard = CustomKeyboard(this, R.xml.keyboard_extended)
         keyboardChoice = NUMBER_KBD
         keyboardView!!.keyboard = keyboard
         keyboardView!!.invalidateAllKeys()
@@ -275,10 +300,10 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
     /**
      * Change view to alphabetic keyboard
      */
-    private fun enableAlphaKeyboard() {
+    private fun activateAlphaKeyboard() {
         val keyLayout = if (keyboardLayout == DEFAULT_KBD_LAYOUT)
             R.xml.keyboard_qwerty else R.xml.keyboard_azerty
-        keyboard = Keyboard(this, keyLayout)
+        keyboard = CustomKeyboard(this, keyLayout)
         keyboardChoice = ALPHA_KBD
         keyboard!!.isShifted = false
         uppercaseNextKeyOnly = false
@@ -507,6 +532,12 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         keyVibrations = prefs.getBoolean("key_vibrations", DEFAULT_VIBRATIONS)
         keyboardLayout = prefs.getString("kbd_layout", DEFAULT_KBD_LAYOUT).toString()
+
+        when (prefs.getString("kbd_key_height", DEFAULT_KBD_LAYOUT).toString()) {
+            "1" -> keyHeight = KEY_HEIGHT_SHORT
+            "3" -> keyHeight = KEY_HEIGHT_MED
+            "5" -> keyHeight = KEY_HEIGHT_TALL
+        }
     }
 
     /**
@@ -554,6 +585,14 @@ class MyInputMethodService : InputMethodService(), OnKeyboardActionListener {
             }
         }
         if (keyboardView != null) keyboardView!!.invalidateKey(mEnterKeyIndex)
+    }
+
+    private fun convertDpToPx(dp: Int): Int {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dp.toFloat(),
+            resources.displayMetrics
+        ).toInt()
     }
 
     override fun onText(charSequence: CharSequence) {}
